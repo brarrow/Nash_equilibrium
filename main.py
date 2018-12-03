@@ -2,26 +2,29 @@ import networkx as nx
 import networkx.algorithms as alg
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.linalg import norm
 
-con = [[0, 0, 1, 1],[1,0,1,0],[0,0,0,1],[1,1,1,0]]
-A = [[0, 0, 2, 3],[1,0,2,0],[0,0,0,1],[1,2,1,0]]
-C = [[0, 0, 2, 3],[1,0,2,0],[0,0,0,1],[1,2,1,0]]
-D = [[0,40,0,0],[0,0,70,0],[0,80,0,0],[0,0,0,0]]
-X1 = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+con = np.array([[0, 0, 1, 1],[1,0,1,0],[0,0,0,1],[1,1,1,0]])
+A = np.array([[0, 0, 2, 3],[1,0,2,0],[0,0,0,1],[1,2,1,0]])
+C = np.array([[0, 0, 2, 3],[1,0,2,0],[0,0,0,1],[1,2,1,0]])
+D = np.array([[0,40,0,0],[0,0,70,0],[0,80,0,0],[0,0,0,0]])
+X1 = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
 demand = np.nonzero(D)
 demand = [(demand[0][i], demand[1][i]) for i in range(demand[0].size)]
 paths = []
+eps = 0.0000001
 
 def curve_weight(i, j, X):
     return (A[i][j] + (X[i][j] / C[i][j]) ** 4)
 
-def curve_grad_weight(X, alf, D):
-    npA = np.array(A)
-    npC = np.array(C)
-    npD = np.array(D)
-    npX = np.array(X)
+def weight(X):
+    return A + (X / C)**4
 
-    return npA*(npX + npD*alf) + (npX + npD*alf)**5 / (5 * npC**4)
+def grad_weight(X, alf, D):
+    ax = A * X
+    dalf = D*alf
+
+    return A*(X + D*alf) + (X + D*alf)**5 / (5 * C**4)
 
 def tpl(i,j, X):
     return (i,j,curve_weight(i,j, X))
@@ -43,7 +46,16 @@ def getAlpha(X, D):
     while b-a > eps:
         x1 = (a + b) / 2 - k * (b - a) / 2;
         x2 = (a + b) / 2 + k * (b - a) / 2;
-        
+        Y1 = grad_weight(X, x1, D)
+        Y2 = grad_weight(X, x2, D)
+        y1s = np.nansum(Y1)
+        y2s = np.nansum(Y2)
+
+        if(y1s <= y2s):
+            b = x2
+        else:
+            a = x1
+    return (a+b)/2
 
 
 
@@ -60,8 +72,9 @@ for path in paths:
 
 while True:
     paths.clear()
-    T = getGraph(X1)
-    Y1 = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+    tw = weight(X1)
+    T = getGraph(tw)
+    Y1 = X1.copy()
 
     for curve in demand:
         paths.append(list(nx.shortest_simple_paths(T, *curve))[0])
@@ -71,8 +84,13 @@ while True:
             ival = path[i]
             inval = path[i + 1]
             Y1[ival][inval] += D[path[0]][path[len(path) - 1]]
-    d = np.array(Y1) - np.array(X1)
-
-
+    d = Y1 - X1
+    alf = getAlpha(X1, d)
+    X2 = X1 + alf * d
+    if norm(X2 - X1) / norm(X1) < eps:
+        break
+    else:
+        X1 = X2
+print(X2)
 
 plt.show()
