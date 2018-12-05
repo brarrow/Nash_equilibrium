@@ -44,7 +44,7 @@ def get_graph(X):
 
 
 def get_alpha_dummy(X, D):
-    alphas = np.linspace(0,1,10000)
+    alphas = np.linspace(0, 1, 10000)
     min = np.inf
     alf_min = 0
     for alf in alphas:
@@ -77,7 +77,7 @@ def get_alpha(X, D):
 
 def draw_graph(G):
     pos = nx.layout.circular_layout(G)
-    posl = nx.layout.circular_layout(G,scale=1.1)
+    posl = nx.layout.circular_layout(G, scale=1.1)
 
     node_sizes = [3 + 10 * i for i in range(len(G))]
     M = G.number_of_edges()
@@ -88,7 +88,7 @@ def draw_graph(G):
     edges = nx.draw_networkx_edges(G, pos, node_size=node_sizes, arrowstyle='->',
                                    arrowsize=10, edge_color=edge_colors,
                                    edge_cmap=plt.cm.Blues, width=2)
-    labels = nx.draw_networkx_labels(G,posl)
+    labels = nx.draw_networkx_labels(G, posl)
 
     for i in range(M):
         edges[i].set_alpha(edge_alphas[i])
@@ -145,4 +145,3 @@ while True:
 print(X2)
 
 print("Sum t(x_res): ", np.nansum(weight(X2)))
-
