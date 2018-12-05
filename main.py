@@ -60,7 +60,6 @@ def get_alpha(X, D):
     b = 1
     eps = 0.00001
     k = 0.001
-
     while b - a > eps:
         x1 = (a + b) / 2 - k * (b - a) / 2;
         x2 = (a + b) / 2 + k * (b - a) / 2;
@@ -78,6 +77,7 @@ def get_alpha(X, D):
 
 def draw_graph(G):
     pos = nx.layout.circular_layout(G)
+    posl = nx.layout.circular_layout(G,scale=1.1)
 
     node_sizes = [3 + 10 * i for i in range(len(G))]
     M = G.number_of_edges()
@@ -88,7 +88,7 @@ def draw_graph(G):
     edges = nx.draw_networkx_edges(G, pos, node_size=node_sizes, arrowstyle='->',
                                    arrowsize=10, edge_color=edge_colors,
                                    edge_cmap=plt.cm.Blues, width=2)
-    labels = nx.draw_networkx_labels(G, pos)
+    labels = nx.draw_networkx_labels(G,posl)
 
     for i in range(M):
         edges[i].set_alpha(edge_alphas[i])
@@ -107,7 +107,7 @@ X1 = weight(np.zeros((4, 4)))
 G = get_graph(X1)
 
 for curve in demand:
-    paths.append(list(nx.shortest_simple_paths(G, *curve, weight='weight'))[0])
+    paths.append(list(nx.shortest_simple_paths(G, *curve, weight='weight'))[::-1][0])
 
 for path in paths:
     for i in range(len(path) - 1):
@@ -132,7 +132,7 @@ while True:
             ivaln = path[i + 1]
             Y1[ival][ivaln] += D[path[0]][path[len(path) - 1]]
     d = Y1 - X1
-    alf = get_alpha(X1, d)
+    alf = get_alpha_dummy(X1, d)
     X2 = X1 + alf * d
     X1 = np.nan_to_num(X1)
     X2 = np.nan_to_num(X2)
@@ -146,5 +146,3 @@ print(X2)
 
 print("Sum t(x_res): ", np.nansum(weight(X2)))
 
-# G = get_graph(X2)
-# draw_graph(G)
